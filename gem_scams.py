@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import lxml.html
 
-droponly = set([
+rare_gems = set([
     'Empower Support',
     'Enlighten Support',
     'Enhance Support',
@@ -112,7 +112,7 @@ def find_best_options(all_chances, prices: list[Gem], maxed: bool,
     # 2021-11-12, prime regrading lens: 0.5ex, secondary: 0.6
     good: list[tuple[str, bool, float, list]] = []
     for name, chances in all_chances.items():
-        if name in droponly:
+        if name in rare_gems:
             continue
         profits = []
         for quality_type, chance in chances.items():
@@ -142,7 +142,7 @@ def best_simple_gems(prices: list[Gem], count, min_amount):
     for gem in prices:
         if gem.quality_type != 'Superior':
             continue
-        if gem.name in droponly:
+        if gem.name in rare_gems:
             continue
         if gem.is_corrupted:
             continue
@@ -175,7 +175,7 @@ def print_profits(all_chances, prices: list[Gem], maxed: bool,
             break
         name, guaranteed, profit, breakdown = item
         marker = '!!! ' if guaranteed else ''
-        details = ', '.join(f'{chance:.1%} {q} {price:.1f} ex'
+        details = ', '.join(f'{chance:.0%} {q} {price:.1f} ex'
                             for chance, price, q in breakdown)
         print(f'  {marker}{name}: {profit:.2f} ex ({details})')
 
