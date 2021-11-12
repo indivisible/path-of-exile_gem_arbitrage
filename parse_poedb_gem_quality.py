@@ -84,7 +84,7 @@ def find_price(prices: list[Gem],
                name: str,
                quality_type: str,
                maxed: bool = False,
-               min_count: int = 10):
+               min_amount: int = 10):
     results = []
     for gem in prices:
         if gem.name != name or gem.quality_type != quality_type:
@@ -96,7 +96,7 @@ def find_price(prices: list[Gem],
                 continue
             if gem.quality < 20:
                 continue
-        if gem.count < min_count:
+        if gem.count < min_amount:
             continue
         results.append(gem)
     if not results:
@@ -106,7 +106,7 @@ def find_price(prices: list[Gem],
 
 
 def find_best_options(all_chances, prices: list[Gem], maxed: bool,
-                      guaranteed_only: bool, min_count: int,
+                      guaranteed_only: bool, min_amount: int,
                       primary_regrading_lens: float,
                       secondary_regrading_lens: float):
     # 2021-11-12, prime regrading lens: 0.5ex, secondary: 0.6
@@ -116,7 +116,7 @@ def find_best_options(all_chances, prices: list[Gem], maxed: bool,
             continue
         profits = []
         for quality_type, chance in chances.items():
-            price = find_price(prices, name, quality_type, maxed, min_count)
+            price = find_price(prices, name, quality_type, maxed, min_amount)
             profits.append((chance, price, quality_type))
         if name.endswith(' Support'):
             cost = secondary_regrading_lens
@@ -137,7 +137,7 @@ def find_best_options(all_chances, prices: list[Gem], maxed: bool,
     return good
 
 
-def best_simple_gems(prices: list[Gem], num=15, min_count=10):
+def best_simple_gems(prices: list[Gem], count, min_amount):
     ok = []
     for gem in prices:
         if gem.quality_type != 'Superior':
@@ -150,12 +150,12 @@ def best_simple_gems(prices: list[Gem], num=15, min_count=10):
             continue
         if gem.level < 20:
             continue
-        if gem.count < min_count:
+        if gem.count < min_amount:
             continue
         ok.append(gem)
     ok.sort(key=lambda g: g.price_chaos, reverse=True)
 
-    for gem in ok[:num]:
+    for gem in ok[:count]:
         print(f'  {gem.name}: {gem.price_chaos:.1f} c')
 
 
@@ -167,7 +167,7 @@ def print_profits(all_chances, prices: list[Gem], maxed: bool,
                              prices,
                              guaranteed_only=guaranteed_only,
                              maxed=maxed,
-                             min_count=min_count,
+                             min_amount=min_count,
                              primary_regrading_lens=primary_regrading_lens,
                              secondary_regrading_lens=secondary_regrading_lens)
     for n, item in enumerate(best):
@@ -250,7 +250,7 @@ def main():
     print()
 
     print('Leveling gems to 20/20:')
-    best_simple_gems(prices)
+    best_simple_gems(prices, count=args.count, min_amount=args.min_amount)
 
     return 0
 
