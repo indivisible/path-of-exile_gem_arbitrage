@@ -175,7 +175,9 @@ def print_profits(all_chances, prices: list[Gem], maxed: bool,
             break
         name, guaranteed, profit, breakdown = item
         marker = '!!! ' if guaranteed else ''
-        print(f'  {marker}{name}: {profit:.2f} ex {breakdown}')
+        details = ', '.join(f'{chance:.1%} {q} {price:.1f} ex'
+                            for chance, price, q in breakdown)
+        print(f'  {marker}{name}: {profit:.2f} ex ({details})')
 
 
 def main():
