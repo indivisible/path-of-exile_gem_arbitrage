@@ -123,7 +123,11 @@ def find_best_options(all_chances, prices: list[Gem], maxed: bool,
         else:
             cost = primary_regrading_lens
         if maxed:
-            cost += find_price(prices, name, 'Superior', True)
+            cost += find_price(prices,
+                               name,
+                               'Superior',
+                               maxed=True,
+                               min_amount=0)
         guaranteed = all(price > cost for _, price, _ in profits)
         profit = sum(chance * price for chance, price, _ in profits) - cost
         if guaranteed_only and not guaranteed:
