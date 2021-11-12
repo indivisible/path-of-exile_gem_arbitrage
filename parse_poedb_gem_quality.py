@@ -156,7 +156,7 @@ def best_simple_gems(prices: list[Gem], num=15, min_count=10):
     ok.sort(key=lambda g: g.price_chaos, reverse=True)
 
     for gem in ok[:num]:
-        print(f'{gem.name}: {gem.price_chaos:.1f} c')
+        print(f'  {gem.name}: {gem.price_chaos:.1f} c')
 
 
 def print_profits(all_chances, prices: list[Gem], maxed: bool,
@@ -175,19 +175,34 @@ def print_profits(all_chances, prices: list[Gem], maxed: bool,
             break
         name, guaranteed, profit, breakdown = item
         marker = '!!! ' if guaranteed else ''
-        print(f'{marker}{name}: {profit:.2f} ex {breakdown}')
+        print(f'  {marker}{name}: {profit:.2f} ex {breakdown}')
 
 
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--min-amount', type=int, default=10)
-    parser.add_argument('--count', type=int, default=10)
-    parser.add_argument('--guaranteed', action='store_true')
-    parser.add_argument('gems_html', type=Path)
-    parser.add_argument('prices_json', type=Path)
-    parser.add_argument('currency_json', type=Path)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--min-amount',
+                        type=int,
+                        default=10,
+                        help='amount for sale to consider viable')
+    parser.add_argument('--count',
+                        type=int,
+                        default=10,
+                        help='show this up to this many results')
+    parser.add_argument('--guaranteed',
+                        action='store_true',
+                        help='only show gems that never result in a loss')
+    parser.add_argument('--gems-html',
+                        type=Path,
+                        default='data/poedb_quality.html')
+    parser.add_argument('--prices-json',
+                        type=Path,
+                        default='data/gem_prices.json')
+    parser.add_argument('--currency-json',
+                        type=Path,
+                        default='data/currency.json')
 
     args = parser.parse_args()
 
