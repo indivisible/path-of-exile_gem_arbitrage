@@ -221,12 +221,14 @@ def main():
             buy_rates[line['currencyTypeName']] = line['chaosEquivalent']
 
     exalt = buy_rates['Exalted Orb']
-    prime = buy_rates['Prime Regrading Lens'] / exalt
-    secondary = buy_rates['Secondary Regrading Lens'] / exalt
+    prime_c = buy_rates['Prime Regrading Lens']
+    prime = prime_c / exalt
+    secondary_c = buy_rates['Secondary Regrading Lens']
+    secondary = secondary_c / exalt
     print('Currency prices:')
     print(f'  Exalt: {exalt:.1f} c')
-    print(f'  Primary: {prime:.1f} ex')
-    print(f'  Secondary: {secondary:.1f} ex')
+    print(f'  Primary: {prime:.1f} ex ({prime_c:.1f} c)')
+    print(f'  Secondary: {secondary:.1f} ex ({secondary_c:.1f} c)')
     print()
 
     print('Regrading level 1 gems:')
