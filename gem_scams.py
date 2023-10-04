@@ -5,8 +5,10 @@ from pathlib import Path
 import json
 from dataclasses import dataclass
 from typing import List
+import time
 
 import lxml.html
+import httpx
 
 rare_gems = set(
     [
@@ -20,7 +22,23 @@ rare_gems = set(
 )
 
 
-def get_file_data(path: Path):
+def get_cached(url: str, path: Path, max_age_hours: float):
+    if path.is_file():
+        mtime = path.stat().st_mtime
+        diff_hours = (time.time() - mtime) * 60 * 60
+        if diff_hours < max_age_hours:
+            return path
+
+    print(f"Updating {path}...")
+    resp = httpx.get(url)
+    resp.raise_for_status()
+    with path.open("wt") as fp:
+        fp.write(resp.text)
+
+    return path
+
+
+def parse_poedb_gem_data(path: Path):
     with path.open() as fp:
         html = lxml.html.parse(fp).getroot()
 
@@ -223,18 +241,58 @@ def main():
         action="store_true",
         help="only show gems that never result in a loss",
     )
-    parser.add_argument("--gems-html", type=Path, default="data/poedb_quality.html")
-    parser.add_argument("--prices-json", type=Path, default="data/gem_prices.json")
-    parser.add_argument("--currency-json", type=Path, default="data/currency.json")
+    parser.add_argument(
+        "--cache-dir", type=Path, default=Path("data"), help="directory for caches"
+    )
+    parser.add_argument(
+        "--gem-data-max-age-hours",
+        type=float,
+        default=168,
+        help="maximum age of gem data from poedb (in hours)",
+    )
+    parser.add_argument(
+        "--gem-prices-max-age-hours",
+        type=float,
+        default=12,
+        help="maximum age of cached gem price data (in hours)",
+    )
+    parser.add_argument(
+        "--exchange-rates-max-age-hours",
+        type=float,
+        default=12,
+        help="maximum age of cached currency exchange rates (in hours)",
+    )
+    parser.add_argument("league")
 
     args = parser.parse_args()
 
-    chances = get_file_data(args.gems_html)
-    with args.prices_json.open() as fp:
+    cache_dir: Path = args.cache_dir
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    league = args.league
+
+    gems_html_path = get_cached(
+        "https://poedb.tw/us/Quality",
+        cache_dir / "poedb_quality.html",
+        args.gem_data_max_age_hours,
+    )
+    gem_prices_json_path = get_cached(
+        f"https://poe.ninja/api/data/itemoverview?league={league}&type=SkillGem",
+        cache_dir / f"gem_prices.{league}.json",
+        args.gem_prices_max_age_hours,
+    )
+    currency_json_path = get_cached(
+        f"https://poe.ninja/api/data/CurrencyOverview?league={league}&type=Currency&language=en",
+        cache_dir / f"currency.{league}.json",
+        args.exchange_rates_max_age_hours,
+    )
+
+    chances = parse_poedb_gem_data(gems_html_path)
+    with gem_prices_json_path.open() as fp:
         prices = parse_gems(json.load(fp))
 
     buy_rates = {}
-    with args.currency_json.open() as fp:
+    with currency_json_path.open() as fp:
         raw = json.load(fp)
         for line in raw["lines"]:
             if "chaosEquivalent" not in line:
