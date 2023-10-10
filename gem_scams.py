@@ -25,7 +25,7 @@ rare_gems = set(
 def get_cached(url: str, path: Path, max_age_hours: float):
     if path.is_file():
         mtime = path.stat().st_mtime
-        diff_hours = (time.time() - mtime) * 60 * 60
+        diff_hours = (time.time() - mtime) / (60 * 60)
         if diff_hours < max_age_hours:
             return path
 
