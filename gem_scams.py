@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List, Tuple
 import time
 
 import lxml.html
@@ -22,7 +22,7 @@ rare_gems = set(
 )
 
 
-def get_cached(url: str, path: Path, max_age_hours: float):
+def get_cached(url: str, path: Path, max_age_hours: float) -> Path:
     if path.is_file():
         mtime = path.stat().st_mtime
         diff_hours = (time.time() - mtime) / (60 * 60)
@@ -38,15 +38,18 @@ def get_cached(url: str, path: Path, max_age_hours: float):
     return path
 
 
-def parse_poedb_gem_data(path: Path):
+GemChances = Dict[str, Dict[str, float]]
+
+
+def parse_poedb_gem_data(path: Path) -> GemChances:
     with path.open() as fp:
         html = lxml.html.parse(fp).getroot()
 
     div = html.get_element_by_id("UnusualGemsQuality")
     table = div.find(".//table")
     body = table.find("./tbody")
-    gem_sums = defaultdict(int)
-    gem_weights = defaultdict(dict)
+    gem_sums: Dict[str, int] = defaultdict(int)
+    gem_weights: Dict[str, Dict[str, int]] = defaultdict(dict)
     for row in body.iterfind(".//tr"):
         cells = [i.text_content() for i in row.findall(".//td")]
         name = cells[0].strip()
@@ -55,7 +58,7 @@ def parse_poedb_gem_data(path: Path):
         if quality != "Superior":
             gem_sums[name] += weight
             gem_weights[name][quality] = weight
-    gem_chances = {}
+    gem_chances: GemChances = {}
     for name, weights in gem_weights.items():
         gem_chances[name] = {}
         for quality, weight in weights.items():
@@ -76,7 +79,7 @@ class Gem:
     count: int
 
 
-def parse_gems(prices) -> list[Gem]:
+def parse_gems(prices) -> List[Gem]:
     results = []
     qualities = ("Superior", "Anomalous", "Divergent", "Phantasmal")
     for gem in prices["lines"]:
@@ -115,7 +118,7 @@ def find_price(
     quality_type: str,
     maxed: bool = False,
     min_amount: int = 10,
-):
+) -> float:
     results: List[Gem] = []
     for gem in prices:
         if gem.name != name or gem.quality_type != quality_type:
@@ -138,14 +141,14 @@ def find_price(
 
 def find_best_options(
     all_chances,
-    prices: list[Gem],
+    prices: List[Gem],
     maxed: bool,
     guaranteed_only: bool,
     min_amount: int,
     primary_regrading_lens: float,
     secondary_regrading_lens: float,
 ):
-    good: list[tuple[str, bool, float, list]] = []
+    good: List[Tuple[str, bool, float, list]] = []
     for name, chances in all_chances.items():
         if name in rare_gems:
             continue
@@ -172,7 +175,7 @@ def find_best_options(
     return good
 
 
-def best_simple_gems(prices: list[Gem], count, min_amount):
+def best_simple_gems(prices: List[Gem], count: int, min_amount: int) -> None:
     ok = []
     for gem in prices:
         if gem.quality_type != "Superior":
@@ -195,15 +198,15 @@ def best_simple_gems(prices: list[Gem], count, min_amount):
 
 
 def print_profits(
-    all_chances,
-    prices: list[Gem],
+    all_chances: GemChances,
+    prices: List[Gem],
     maxed: bool,
     guaranteed_only: bool,
     min_count: int,
     count: int,
     primary_regrading_lens: float,
     secondary_regrading_lens: float,
-):
+) -> None:
     best = find_best_options(
         all_chances,
         prices,
@@ -224,7 +227,7 @@ def print_profits(
         print(f"  {marker}{name}: {profit:.2f} div ({details})")
 
 
-def main():
+def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
